@@ -18,18 +18,42 @@ fn select_file() -> Option<PathBuf> {
         .pick_file();
 }
 
+const XMAS: &str = "XMAS";
+const SAMX: &str = "SAMX";
+
+fn count_horizontal(column_index: usize, input_matrix: &Vec<char>) -> i32 {
+    let mut count = 0;
+    if column_index + XMAS.len() < input_matrix.len()
+        && XMAS
+            == input_matrix[column_index..(column_index + XMAS.len())]
+                .iter()
+                .collect::<String>()
+    {
+        count += 1;
+    }
+    if column_index >= SAMX.len()
+        && SAMX
+            == input_matrix[(column_index - SAMX.len() + 1)..column_index + 1]
+                .iter()
+                .collect::<String>()
+    {
+        count += 1;
+    }
+
+    return count;
+}
+
 fn search_xmas(
     letter: char,
     input_matrix: &Vec<Vec<char>>,
     row_index: usize,
     column_index: usize,
 ) -> i32 {
-    return 1;
+    return count_horizontal(column_index, &input_matrix[row_index]);
 }
 
 fn process_file(file_path: PathBuf) {
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
-    let mut xmas_hits = 0;
 
     let mut input_matrix: Vec<Vec<char>> = Vec::new();
     for report in contents.trim().lines() {
