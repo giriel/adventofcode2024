@@ -26,14 +26,6 @@ fn search_xmas(
 ) -> i32 {
     return 1;
 }
-fn search_samx(
-    letter: char,
-    input_matrix: &Vec<Vec<char>>,
-    row_index: usize,
-    column_index: usize,
-) -> i32 {
-    return 1;
-}
 
 fn process_file(file_path: PathBuf) {
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
@@ -44,8 +36,7 @@ fn process_file(file_path: PathBuf) {
         input_matrix.push(report.chars().collect::<Vec<char>>());
     }
 
-    // X can be the start of XMAS
-    // S can be the start of SAMX
+    // let's start from X as the start of XMAS
     // for every of these we should check matches
     //  horizontally in both directions
     //  vertically in both directions
@@ -59,9 +50,6 @@ fn process_file(file_path: PathBuf) {
             if letter == 'X' {
                 hits_heatmap[row_index][column_index] =
                     search_xmas(letter, &input_matrix, row_index, column_index);
-            } else if letter == 'S' {
-                hits_heatmap[row_index][column_index] =
-                    search_samx(letter, &input_matrix, row_index, column_index);
             }
         }
     }
