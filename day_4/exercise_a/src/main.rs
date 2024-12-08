@@ -19,36 +19,6 @@ fn select_file() -> Option<PathBuf> {
 }
 
 const XMAS: &str = "XMAS";
-const SAMX: &str = "SAMX";
-
-fn count_horizontal(column_index: usize, input_matrix: &Vec<char>) -> i32 {
-    let mut count = 0;
-    if column_index + XMAS.len() < input_matrix.len()
-        && XMAS
-            == input_matrix[column_index..(column_index + XMAS.len())]
-                .iter()
-                .collect::<String>()
-    {
-        count += 1;
-    }
-    if column_index >= SAMX.len()
-        && SAMX
-            == input_matrix[(column_index - SAMX.len() + 1)..column_index + 1]
-                .iter()
-                .collect::<String>()
-    {
-        count += 1;
-    }
-
-    return count;
-}
-
-fn search_xmas(input_matrix: &Vec<Vec<char>>, row_index: usize, column_index: usize) -> i32 {
-    let mut total = count_horizontal(column_index, &input_matrix[row_index]);
-    total += count_vertical(row_index, column_index, &input_matrix);
-    total += count_diagonally(row_index, column_index, &input_matrix);
-    return total;
-}
 
 struct Search {
     valid: bool,
@@ -97,10 +67,19 @@ impl Search {
     }
 }
 
-fn count_diagonally(row_index: usize, column_index: usize, input_matrix: &Vec<Vec<char>>) -> i32 {
+fn search_xmas(input_matrix: &Vec<Vec<char>>, row_index: usize, column_index: usize) -> i32 {
     let max_rows = input_matrix.len();
     let max_columns = input_matrix[0].len();
-    let advancements = vec![[-1, -1], [1, -1], [-1, 1], [1, 1]];
+    let advancements = vec![
+        [-1, -1],
+        [-1, 0],
+        [1, 0],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+        [0, -1],
+        [0, 1],
+    ];
     let mut diagonal_matches: Vec<Search> = Vec::new();
     for advancement in advancements {
         diagonal_matches.push(Search {
@@ -151,44 +130,6 @@ fn update_index(index: usize, update: i32, max: usize) -> Option<usize> {
     }
 }
 
-fn count_vertical(row_index: usize, column_index: usize, input_matrix: &Vec<Vec<char>>) -> i32 {
-    let can_check_downwards = row_index + 1 < input_matrix.len() - XMAS.len();
-    let can_check_upwards = row_index + 1 > XMAS.len();
-
-    let mut matches = 0;
-    if can_check_downwards {
-        matches += 1;
-    }
-    if can_check_upwards {
-        matches += 1;
-    }
-    if can_check_upwards {
-        for index in 1..XMAS.len() {
-            let row_upwards = row_index.checked_sub(index).expect("checked this up front");
-            if input_matrix[row_upwards][column_index]
-                != XMAS.chars().nth(index).expect("checked up front")
-            {
-                matches -= 1;
-                break;
-            }
-        }
-    }
-
-    if can_check_downwards {
-        for index in 1..XMAS.len() {
-            let row_downwards = row_index.checked_add(index).expect("checked this up front");
-            if input_matrix[row_downwards][column_index]
-                != XMAS.chars().nth(index).expect("checked up front")
-            {
-                matches -= 1;
-                break;
-            }
-        }
-    }
-
-    return matches;
-}
-
 fn process_file(file_path: PathBuf) {
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
 
@@ -196,12 +137,6 @@ fn process_file(file_path: PathBuf) {
     for report in contents.trim().lines() {
         input_matrix.push(report.chars().collect::<Vec<char>>());
     }
-
-    // let's start from X as the start of XMAS
-    // for every of these we should check matches
-    //  horizontally in both directions
-    //  vertically in both directions
-    //  diagonally in 4 directions
 
     let mut hits_heatmap = vec![vec![0; input_matrix.len()]; input_matrix[0].len()];
     for row_index in 0..input_matrix.len() {
