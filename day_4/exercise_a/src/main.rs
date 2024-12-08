@@ -100,37 +100,16 @@ impl Search {
 fn count_diagonally(row_index: usize, column_index: usize, input_matrix: &Vec<Vec<char>>) -> i32 {
     let max_rows = input_matrix.len();
     let max_columns = input_matrix[0].len();
-    let advance_left_top = [-1, -1];
-    let advance_right_top = [1, -1];
-    let advance_left_bottom = [-1, 1];
-    let advance_right_bottom = [1, 1];
-
-    let mut diagonal_matches = [
-        Search {
-            valid: true,
-            row_index: row_index,
-            column_index: column_index,
-            advance: advance_left_top,
-        },
-        Search {
-            valid: true,
-            row_index: row_index,
-            column_index: column_index,
-            advance: advance_right_top,
-        },
-        Search {
-            valid: true,
-            row_index: row_index,
-            column_index: column_index,
-            advance: advance_left_bottom,
-        },
-        Search {
+    let advancements = vec![[-1, -1], [1, -1], [-1, 1], [1, 1]];
+    let mut diagonal_matches: Vec<Search> = Vec::new();
+    for advancement in advancements {
+        diagonal_matches.push(Search {
             valid: true,
             row_index,
             column_index,
-            advance: advance_right_bottom,
-        },
-    ];
+            advance: advancement,
+        });
+    }
     for xmas_index in 1..XMAS.len() {
         let xmas_char = XMAS.chars().nth(xmas_index).expect("verified");
         let mut still_matching = false;
