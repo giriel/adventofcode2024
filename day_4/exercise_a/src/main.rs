@@ -49,7 +49,47 @@ fn search_xmas(
     row_index: usize,
     column_index: usize,
 ) -> i32 {
-    return count_horizontal(column_index, &input_matrix[row_index]);
+    let mut total = count_horizontal(column_index, &input_matrix[row_index]);
+    total += count_vertical(row_index, column_index, &input_matrix);
+    return total;
+}
+
+fn count_vertical(row_index: usize, column_index: usize, input_matrix: &Vec<Vec<char>>) -> i32 {
+    let can_check_downwards = row_index + 1 < input_matrix.len() - XMAS.len();
+    let can_check_upwards = row_index + 1 > XMAS.len();
+
+    let mut matches = 0;
+    if can_check_downwards {
+        matches += 1;
+    }
+    if can_check_upwards {
+        matches += 1;
+    }
+    if can_check_upwards {
+        for index in 1..XMAS.len() {
+            let row_upwards = row_index.checked_sub(index).expect("checked this up front");
+            if input_matrix[row_upwards][column_index]
+                != XMAS.chars().nth(index).expect("checked up front")
+            {
+                matches -= 1;
+                break;
+            }
+        }
+    }
+
+    if can_check_downwards {
+        for index in 1..XMAS.len() {
+            let row_downwards = row_index.checked_add(index).expect("checked this up front");
+            if input_matrix[row_downwards][column_index]
+                != XMAS.chars().nth(index).expect("checked up front")
+            {
+                matches -= 1;
+                break;
+            }
+        }
+    }
+
+    return matches;
 }
 
 fn process_file(file_path: PathBuf) {
