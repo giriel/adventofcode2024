@@ -43,15 +43,133 @@ fn count_horizontal(column_index: usize, input_matrix: &Vec<char>) -> i32 {
     return count;
 }
 
-fn search_xmas(
-    letter: char,
-    input_matrix: &Vec<Vec<char>>,
-    row_index: usize,
-    column_index: usize,
-) -> i32 {
+fn search_xmas(input_matrix: &Vec<Vec<char>>, row_index: usize, column_index: usize) -> i32 {
     let mut total = count_horizontal(column_index, &input_matrix[row_index]);
     total += count_vertical(row_index, column_index, &input_matrix);
+    total += count_diagonally(row_index, column_index, &input_matrix);
     return total;
+}
+
+struct Search {
+    valid: bool,
+    row_index: usize,
+    column_index: usize,
+    advance: [i32; 2],
+}
+
+impl Search {
+    fn advance(&mut self, max_rows: usize, max_columns: usize) -> bool {
+        let new_row_index: usize;
+        match update_index(self.row_index, self.advance[0], max_rows) {
+            Some(x) => {
+                new_row_index = x;
+            }
+            None => {
+                self.valid = false;
+                return false;
+            }
+        }
+        let new_column_index: usize;
+        match update_index(self.column_index, self.advance[1], max_columns) {
+            Some(x) => {
+                new_column_index = x;
+            }
+            None => {
+                self.valid = false;
+                return false;
+            }
+        }
+        self.row_index = new_row_index;
+        self.column_index = new_column_index;
+        return true;
+    }
+
+    fn is_valid(&self) -> bool {
+        return self.valid;
+    }
+
+    fn matches_char(&self, input_matrix: &Vec<Vec<char>>, character: char) -> bool {
+        return input_matrix[self.row_index][self.column_index] == character;
+    }
+
+    fn invalidate(&mut self) {
+        self.valid = false;
+    }
+}
+
+fn count_diagonally(row_index: usize, column_index: usize, input_matrix: &Vec<Vec<char>>) -> i32 {
+    let max_rows = input_matrix.len();
+    let max_columns = input_matrix[0].len();
+    let advance_left_top = [-1, -1];
+    let advance_right_top = [1, -1];
+    let advance_left_bottom = [-1, 1];
+    let advance_right_bottom = [1, 1];
+
+    let mut diagonal_matches = [
+        Search {
+            valid: true,
+            row_index: row_index,
+            column_index: column_index,
+            advance: advance_left_top,
+        },
+        Search {
+            valid: true,
+            row_index: row_index,
+            column_index: column_index,
+            advance: advance_right_top,
+        },
+        Search {
+            valid: true,
+            row_index: row_index,
+            column_index: column_index,
+            advance: advance_left_bottom,
+        },
+        Search {
+            valid: true,
+            row_index,
+            column_index,
+            advance: advance_right_bottom,
+        },
+    ];
+    for xmas_index in 1..XMAS.len() {
+        let xmas_char = XMAS.chars().nth(xmas_index).expect("verified");
+        let mut still_matching = false;
+        for diagonal_match in &mut diagonal_matches {
+            if !diagonal_match.is_valid() {
+                continue;
+            }
+            if !diagonal_match.advance(max_rows, max_columns) {
+                continue;
+            }
+
+            if diagonal_match.matches_char(input_matrix, xmas_char) {
+                still_matching = true;
+            } else {
+                diagonal_match.invalidate();
+            }
+        }
+
+        if !still_matching {
+            return 0;
+        }
+    }
+
+    return i32::try_from(diagonal_matches.iter().filter(|x| x.is_valid()).count()).expect("msg");
+}
+
+fn update_index(index: usize, update: i32, max: usize) -> Option<usize> {
+    match i32::try_from(index) {
+        Ok(x) => {
+            let updated = x + update;
+            let max: i32 = i32::try_from(max).expect("ok");
+            let valid_range = 0..max;
+            if valid_range.contains(&updated) {
+                return usize::try_from(updated).ok();
+            }
+            None
+        }
+        Err(_) => None,
+    }
 }
 
 fn count_vertical(row_index: usize, column_index: usize, input_matrix: &Vec<Vec<char>>) -> i32 {
@@ -113,7 +231,7 @@ fn process_file(file_path: PathBuf) {
             let letter = row[column_index];
             if letter == 'X' {
                 hits_heatmap[row_index][column_index] =
-                    search_xmas(letter, &input_matrix, row_index, column_index);
+                    search_xmas(&input_matrix, row_index, column_index);
             }
         }
     }
