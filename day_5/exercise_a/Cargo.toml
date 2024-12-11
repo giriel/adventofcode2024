@@ -1,0 +1,8 @@
+[package]
+name = "exercise_a"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rfd = "0.15.1"
+regex = "1.11.1"
