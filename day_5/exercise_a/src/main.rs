@@ -1,4 +1,6 @@
 #![feature(iter_map_windows)]
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -72,7 +74,51 @@ fn process_file(file_path: PathBuf) {
         }
     }
 
-    println!("{:?}", rules);
-    println!("{:?}", input);
-    println!("Result = {}", 0);
+    // let's revert the first and second entry to get easy checks for errors
+    let mut error_map: BTreeMap<i64, BTreeSet<i64>> = BTreeMap::new();
+    for (first_entry, following_entry) in rules {
+        error_map
+            .entry(following_entry)
+            .and_modify(|x| {
+                x.insert(first_entry);
+            })
+            .or_insert(BTreeSet::from([first_entry]));
+    }
+
+    let mut middle_entry: Vec<i64> = Vec::new();
+    for entries_to_verify in input {
+        let mut passed_entries: Vec<i64> = Vec::new();
+        let mut all_passed = true;
+        for entry in entries_to_verify.iter().rev() {
+            if passed_entries.is_empty() {
+                passed_entries.push(*entry);
+                continue;
+            }
+
+            match error_map.get(&entry) {
+                Some(error_entries) => {
+                    for passed_entry in &passed_entries {
+                        if error_entries.contains(&passed_entry) {
+                            // println!("{} has {} in {:?}", entry, passed_entry, error_entries);
+                            all_passed = false;
+                            break;
+                        }
+                    }
+                }
+                None => (),
+            }
+            if all_passed {
+                passed_entries.push(*entry);
+            } else {
+                break;
+            }
+        }
+        if all_passed {
+            println!("{:?}", entries_to_verify);
+            let middle_index = entries_to_verify.len().checked_div(2).expect("msg");
+            middle_entry.push(*entries_to_verify.get(middle_index).expect("msg"));
+        }
+    }
+
+    println!("Result = {}", middle_entry.iter().sum::<i64>());
 }
